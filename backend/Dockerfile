@@ -3,7 +3,7 @@ LABEL maintainer="Lucas Medeiros"
 
 ENV PYTHONUNBUFFERED 1
 
-COPY ./pyproject.toml ./uv.lock /app/
+COPY pyproject.toml ./uv.lock /app/
 WORKDIR /app
 EXPOSE 8000
 
