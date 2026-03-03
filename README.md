@@ -1,185 +1,252 @@
-# 🧪 Coding Test -- Meeting Room Booking API
 
-------------------------------------------------------------------------
+# 🧪 Coding Test — Fullstack Pleno
+## Meeting Room Booking + Async Notification System
 
-# 📌 Executive Summary
+---
 
-**Language:** Python 3.10+\
-**Framework:** Your choice (FastAPI, Flask, Django, etc.)\
-**Database:** Your choice (SQLite allowed; PostgreSQL recommended for
-advanced constraints)
+# 📌 Sobre o Desafio
 
-## 🎯 Goal of the Assessment
+Você deverá desenvolver uma aplicação **Fullstack** para gerenciamento de reservas de salas com um sistema de notificação assíncrono por e-mail.
 
-Build a production-style backend API for a **Meeting Room Booking**
-system.
+O objetivo é avaliar como você:
 
-This assessment evaluates:
+- Estrutura a aplicação
+- Modela os dados
+- Implementa regras de negócio
+- Trata concorrência
+- Organiza processamento assíncrono
+- Escreve testes
+- Documenta decisões técnicas
 
--   REST API design
--   Data modeling
--   Business rule implementation
--   Concurrency-safe booking logic
--   Authentication & authorization
--   Automated testing
--   Code structure and maintainability
+Você tem liberdade de arquitetura e implementação, desde que atenda aos requisitos descritos.
 
-You are free to make architectural decisions as long as all requirements
-are met.
+---
 
-------------------------------------------------------------------------
+# ⏳ Prazo
 
-# 📖 Scenario & Problem Statement
+Após receber o link do desafio, você tem **3 dias corridos** para submeter sua solução.
 
-You are building the backend for a company that needs a **Meeting Room
-Booking** system.
+---
 
-Teams must be able to:
+# 🚀 Como proceder
 
--   Register rooms
--   Create bookings for specific time ranges
--   Prevent overlapping bookings
--   Cancel and reschedule reservations
--   Query bookings with filters
+1. Faça o **fork** do repositório oficial:
+   https://github.com/MailerWeb/desafio-mailerweb-ino
 
-The system must be reliable and prevent double-booking even under
-concurrent requests.
+2. Desenvolva sua solução no seu fork.
 
-------------------------------------------------------------------------
+3. Ao finalizar, envie o link do seu repositório para avaliação.
 
-# 🚀 API Requirements
+---
 
-## 🔎 General Rules
+# 🎯 Objetivo do Projeto
 
--   All timestamps must use **ISO 8601 with timezone**
--   A booking must satisfy:
-    -   `start_at < end_at`
-    -   Minimum duration: **15 minutes**
-    -   Maximum duration: **8 hours**
--   A room cannot have overlapping **active** bookings
--   Canceling a booking does **not** delete it
+Construir uma aplicação que permita:
 
-### Overlap definition
+- Criar e gerenciar salas
+- Criar reservas com prevenção de conflito de horário
+- Editar e cancelar reservas
+- Notificar automaticamente os participantes por e-mail quando houver mudanças
 
-Two bookings overlap if:
+---
+
+# 🧱 Stack
+
+## Backend
+- Python 3.10+
+- Framework livre (FastAPI, Flask, Django etc.)
+- Banco livre (SQLite permitido, PostgreSQL recomendado)
+
+## Frontend
+- React ou Next.js
+
+Estrutura de pastas livre (monorepo ou separadas).
+
+---
+
+# 📖 Contexto do Sistema
+
+A empresa precisa organizar reservas de salas e garantir que os participantes sejam notificados automaticamente quando uma reunião for:
+
+- Criada
+- Alterada
+- Cancelada
+
+As notificações devem ser processadas de forma **assíncrona**, via worker.
+
+---
+
+# 🔧 Requisitos Funcionais
+
+## 1️⃣ Salas
+
+- Criar sala
+- Listar salas
+- Visualizar detalhes
+- Nome único
+- Capacidade válida
+
+---
+
+## 2️⃣ Reservas
+
+Uma reserva deve conter:
+
+- Título
+- Sala
+- Horário de início e fim
+- Status (ativa ou cancelada)
+- Participantes
+
+### Regras obrigatórias
+
+- Datas em ISO 8601 com timezone
+- `start_at < end_at`
+- Duração mínima: 15 minutos
+- Duração máxima: 8 horas
+- Não pode haver sobreposição de reservas ativas na mesma sala
+- Reservas canceladas não devem ser removidas
+
+### Overlap
+
+Existe conflito quando:
 
     new_start < existing_end AND new_end > existing_start
 
-Edge-touching bookings (e.g., 10:00--11:00 and 11:00--12:00) are
-allowed.
+Reservas que apenas encostam no horário são permitidas.
 
-------------------------------------------------------------------------
+### Concorrência
 
-# 🔌 Endpoints
+A aplicação deve impedir que duas requisições simultâneas criem reservas conflitantes.
 
-## GET /health
+Documente sua estratégia (transação, lock, constraint etc.).
 
-Returns:
+---
 
-``` json
-{ "status": "ok" }
-```
+# 🔐 Autenticação
 
-------------------------------------------------------------------------
+Deve existir mecanismo de autenticação.
 
-## POST /rooms
+Você pode usar:
 
-Authentication required.
+- JWT
+- Token fixo
+- Sistema simplificado
 
-``` json
-{
-  "name": "Atlantic",
-  "capacity": 10
-}
-```
+Deve existir conceito de usuário.
 
-Errors: - 400 invalid payload - 409 duplicate room name - 401
-unauthorized
+Usuários autenticados podem:
 
-------------------------------------------------------------------------
+- Criar reservas
+- Editar reservas
+- Cancelar reservas
 
-## GET /rooms
+---
 
-Pagination supported.
+# ✉️ Sistema de Mensageria (Obrigatório)
 
-------------------------------------------------------------------------
+Além das reservas, o sistema deve implementar um mecanismo assíncrono de notificação por e-mail usando padrão **Outbox + Worker**.
 
-## POST /rooms/{room_id}/bookings
+## Eventos que devem gerar notificação
 
-Authentication required.
+- BOOKING_CREATED
+- BOOKING_UPDATED
+- BOOKING_CANCELED
 
-``` json
-{
-  "title": "Sprint Planning",
-  "start_at": "2026-02-23T10:00:00-03:00",
-  "end_at": "2026-02-23T11:00:00-03:00"
-}
-```
+## Requisitos
 
-Must prevent overlapping active bookings.
+Ao criar/alterar/cancelar uma reserva:
 
-------------------------------------------------------------------------
+1. Persistir alteração da reserva
+2. Criar um evento na tabela de Outbox
+3. Garantir que ambos ocorram na mesma transação
 
-# 🗄️ Database Schema (Example)
+---
 
-``` sql
-CREATE TABLE rooms (
-  id UUID PRIMARY KEY,
-  name VARCHAR(60) NOT NULL,
-  capacity INTEGER NOT NULL CHECK (capacity >= 1),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+## Worker
 
-CREATE TABLE bookings (
-  id UUID PRIMARY KEY,
-  room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE RESTRICT,
-  title VARCHAR(120) NOT NULL,
-  start_at TIMESTAMPTZ NOT NULL,
-  end_at TIMESTAMPTZ NOT NULL,
-  status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'canceled')),
-  canceled_at TIMESTAMPTZ NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK (start_at < end_at)
-);
-```
+Deve existir um worker separado que:
 
-------------------------------------------------------------------------
+- Busca eventos pendentes
+- Processa envio de e-mails
+- Marca como processado
+- Implementa retry com controle de tentativas
+- Evita envio duplicado (idempotência)
 
-# 🔐 Authentication
+O worker pode ser:
 
-Use:
+- Celery
+- RQ
+- Processo simples em loop
+- Command separado
 
-    Authorization: Bearer <token>
+Documente como executar.
 
-Environment variable:
+---
+## Conteúdo mínimo do e-mail
 
-    API_TOKEN=your-token
+- Título da reunião
+- Sala
+- Horário
+- Tipo de evento (criada, alterada, cancelada)
 
-------------------------------------------------------------------------
+Pode ser texto simples.
 
-# 🧪 Testing Requirements
+---
 
-Minimum:
+# 🧪 Testes
 
--   10 tests
--   Unit + integration tests
--   Overlap validation
--   Auth validation
--   Cancel/reschedule logic
+## Backend
 
-------------------------------------------------------------------------
+Esperamos testes cobrindo:
 
-# 🎁 Bonus
+- Validação de datas
+- Conflito de reserva
+- Permissões
+- Criação de evento no outbox
+- Processamento pelo worker
+- Idempotência de envio
 
-Frontend SPA (React/Nextjs) consuming the API.
+## Frontend
 
-------------------------------------------------------------------------
+Testes mínimos para:
 
-# 📦 Submission
+- Criar reserva
+- Exibir erro de conflito
+- Fluxo básico de login
+- Integração com backend
 
-Submit:
+---
 
--   A fork with the source code
--   Tests
--   README with setup instructions
+# 🖥️ Frontend
+
+Deve permitir:
+
+- Login
+- Listar salas
+- Criar reserva
+- Editar/cancelar reserva
+
+UX deve tratar:
+
+- Loading
+- Erros
+- Feedback ao usuário
+
+---
+
+# 📦 Entrega
+
+Seu repositório deve conter:
+
+- Backend
+- Frontend
+- Testes
+- README com:
+  - Como rodar backend
+  - Como rodar frontend
+  - Como rodar worker
+  - Variáveis de ambiente
+  - Decisões técnicas
+
+Boa sorte 🚀
