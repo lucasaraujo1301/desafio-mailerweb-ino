@@ -24,8 +24,8 @@ It’s perfect as a **forkable starter project** for backend APIs.
 ## ⚙️ Features
 
 ✨ **Modern tooling**
-- **uv** for blazing-fast dependency management and virtual environment handling :contentReference[oaicite:1]{index=1}
-- **Ruff** for fast linting and formatting replacing legacy tools like Black and Flake8 :contentReference[oaicite:2]{index=2}
+- **uv** for blazing-fast dependency management and virtual environment handling
+- **Ruff** for fast linting and formatting replacing legacy tools like Black and Flake8
 - **python-dotenv** for loading environment variables from a `.env` file
 
 🧩 **Ready-to-develop**
