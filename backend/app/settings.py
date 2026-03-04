@@ -153,7 +153,15 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication"
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
 }
+
+CELERY_BROKER_URL = os.environ.get("BROKER_URL")
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "UTC"
