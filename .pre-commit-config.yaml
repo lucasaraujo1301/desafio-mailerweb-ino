@@ -7,18 +7,15 @@ repos:
       - id: end-of-file-fixer
         files: ^backend
 
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.4
     hooks:
       - id: ruff
         name: ruff
         files: ^backend
-        entry: uv run ruff check --fix
-        language: system
-        types: [ python ]
+        args: ["--config=backend/pyproject.toml"]
 
       - id: ruff-format
         name: ruff format
         files: ^backend
-        entry: uv run ruff format
-        language: system
-        types: [ python ]
+        args: ["--config=backend/pyproject.toml"]
