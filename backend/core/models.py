@@ -5,7 +5,18 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 
-from core.models.base_model import BaseModel
+
+class BaseModel(models.Model):
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_active = False
+        self.save()
 
 
 class UserManager(BaseUserManager):
@@ -33,7 +44,3 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-
-    def delete(self, using=None, keep_parents=False):
-        self.is_active = False
-        self.save()
