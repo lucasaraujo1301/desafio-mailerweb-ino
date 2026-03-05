@@ -12,12 +12,10 @@ repos:
     hooks:
       - id: ruff
         name: ruff
-        files: ^backend
         args:
-          - "--config=backend/pyproject.toml"
-          - "--src=backend"
+          - backend/
 
       - id: ruff-format
         name: ruff format
-        files: ^backend
-        args: ["--config=backend/pyproject.toml"]
+        args:
+          - backend/
