@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, viewsets
 
+from core.models import User
 from user.serializers import AdminUserSerializer, UserSerializer
 
 
@@ -16,5 +17,6 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
 
 class AdminUserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
     serializer_class = AdminUserSerializer
     permissions_classes = [permissions.IsAdminUser]
