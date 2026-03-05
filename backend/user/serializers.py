@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class AdminUserSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ["is_superuser"]
+        fields = UserSerializer.Meta.fields + ["is_superuser", "is_active"]
 
     def create(self, validated_data: dict) -> User:
         if validated_data.get("is_superuser"):

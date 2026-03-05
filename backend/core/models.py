@@ -3,6 +3,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -44,3 +45,21 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
+
+    def is_admin(self):
+        return self.is_staff and self.is_superuser
+
+
+class Room(BaseModel):
+    name = models.CharField(max_length=100, null=False, blank=False, unique=True)
+    capacity = models.PositiveIntegerField(null=False, blank=False, default=5, validators=[MinValueValidator(1)])
+
+    class Meta:
+        # Constraints put the validation in SQL level, that's why it works with .create() and raise IntegrityError
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(capacity__gt=0),
+                name="capacity_must_be_positive",
+                violation_error_message="Capacity must be greater than zero.",
+            )
+        ]
