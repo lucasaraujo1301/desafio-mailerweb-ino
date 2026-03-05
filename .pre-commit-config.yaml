@@ -15,7 +15,7 @@ repos:
         files: ^backend
         args:
           - "--config=backend/pyproject.toml"
-          - "--fix"
+          - "--src=backend"
 
       - id: ruff-format
         name: ruff format
