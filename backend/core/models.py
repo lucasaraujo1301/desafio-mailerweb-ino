@@ -12,7 +12,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F, Func
 
-from core.choices import Status
+from core.choices import OutboxEventType, Status
 
 
 class BaseModel(models.Model):
@@ -25,7 +25,7 @@ class BaseModel(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self.is_active = False
-        self.save()
+        self.save(update_fields=["is_active"])
 
 
 class UserManager(BaseUserManager):
@@ -122,4 +122,18 @@ class Reservation(BaseModel):
     def delete(self, using=None, keep_parents=False):
         self.is_active = False
         self.status = Status.CANCELED
-        self.save()
+        self.save(update_fields=["status", "is_active"])
+
+
+class OutboxEvent(models.Model):
+    event_type = models.CharField(max_length=50, choices=OutboxEventType)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    retries = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.event_type} - {self.created_at}"

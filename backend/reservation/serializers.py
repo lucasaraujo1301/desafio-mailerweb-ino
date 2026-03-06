@@ -1,8 +1,10 @@
 from datetime import timedelta
 
+from django.db import transaction
 from rest_framework import serializers
 
-from core.models import Reservation, Room, User
+from core.choices import OutboxEventType
+from core.models import OutboxEvent, Reservation, Room, User
 from core.serializers import BaseModelSerializer
 from room.serializers import RoomSerializer
 from user.serializers import UserSerializer
@@ -53,6 +55,40 @@ class ReservationSerializer(BaseModelSerializer):
         self._get_reservation_users(attrs)
 
         return attrs
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            reservation = super().create(validated_data)
+            OutboxEvent.objects.create(
+                event_type="BOOKING_CREATED",
+                payload={
+                    "reservation_id": reservation.id,
+                    "title": reservation.title,
+                    "to_emails": list(reservation.users.values_list("email", flat=True)),
+                    "room_name": reservation.room.name,
+                    "start_datetime": reservation.start_datetime,
+                    "end_datetime": reservation.end_datetime,
+                    "event_type": OutboxEventType.BOOKING_CREATED.label,
+                },
+            )
+        return reservation
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            reservation = super().update(instance, validated_data)
+            OutboxEvent.objects.create(
+                event_type=OutboxEventType.BOOKING_UPDATED,
+                payload={
+                    "reservation_id": reservation.id,
+                    "title": reservation.title,
+                    "to_emails": list(reservation.users.values_list("email", flat=True)),
+                    "room_name": reservation.room.name,
+                    "start_datetime": reservation.start_datetime,
+                    "end_datetime": reservation.end_datetime,
+                    "event_type": OutboxEventType.BOOKING_UPDATED.label,
+                },
+            )
+        return reservation
 
     def _get_request_user(self) -> User | None:
         context = self.context.get("request")

@@ -12,13 +12,13 @@ class TestReservationApi:
     def _get_reservation_url_detail(self, reservation_id):
         return reverse("reservation:reservation-detail", args=[reservation_id])
 
-    def test_reservation_401_error(self, mock_email_task, client):
+    def test_reservation_401_error(self, client):
         response = client.get(self.GET_POST_RESERVATION_URL)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_reservation_list_only_user_reservations(
-        self, mock_email_task, auth_client, reservation_with_user, admin_user, reservation_factory
+        self, auth_client, reservation_with_user, admin_user, reservation_factory
     ):
         reservation_factory(
             room=reservation_with_user.room,
@@ -34,19 +34,19 @@ class TestReservationApi:
         assert response.data["count"] == 1
         assert response.data["results"][0]["id"] == reservation_with_user.pk
 
-    def test_admin_list_sees_all(self, mock_email_task, admin_client, reservation):
+    def test_admin_list_sees_all(self, admin_client, reservation):
         response = admin_client.get(self.GET_POST_RESERVATION_URL)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] >= 1
 
-    def test_reservation_detail_success(self, mock_email_task, auth_client, reservation_with_user):
+    def test_reservation_detail_success(self, auth_client, reservation_with_user):
         response = auth_client.get(self._get_reservation_url_detail(reservation_with_user.pk))
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["id"] == reservation_with_user.pk
 
-    def test_create_reservation_success(self, mock_email_task, auth_client, room):
+    def test_create_reservation_success(self, auth_client, room):
         payload = {
             "room": room.pk,
             "start_datetime": "2026-03-05T10:00:00Z",
@@ -64,7 +64,7 @@ class TestReservationApi:
         assert isinstance(response.data, dict)
         assert response.data["id"] is not None
 
-    def test_update_reservation_success(self, mock_email_task, auth_client, reservation_with_user):
+    def test_update_reservation_success(self, auth_client, reservation_with_user):
         payload = {"title": "Updated Title"}
 
         response = auth_client.patch(
@@ -78,16 +78,15 @@ class TestReservationApi:
         assert response.status_code == status.HTTP_200_OK
         assert reservation_with_user.title == payload["title"]
 
-    def test_delete_reservation_success(self, mock_email_task, auth_client, reservation_with_user):
+    def test_delete_reservation_success(self, auth_client, reservation_with_user):
         response = auth_client.delete(self._get_reservation_url_detail(reservation_with_user.pk))
 
         reservation_with_user.refresh_from_db()
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert reservation_with_user.is_active is False
-        mock_email_task.assert_called()
 
-    def test_user_cannot_access_other_user_reservation(self, mock_email_task, auth_client, reservation, admin_user):
+    def test_user_cannot_access_other_user_reservation(self, auth_client, reservation, admin_user):
         reservation.users.clear()
         reservation.users.add(admin_user)
 

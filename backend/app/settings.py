@@ -174,3 +174,10 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_PORT = os.environ.get("EMAIL_PORT")
 EMAIL_USE_TLS = False
+
+CELERY_BEAT_SCHEDULE = {
+    "process-outbox-events": {
+        "task": "core.tasks.periodic_task.process_outbox_events",
+        "schedule": 60.0,  # runs every 60 seconds
+    },
+}

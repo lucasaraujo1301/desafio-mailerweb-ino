@@ -1,5 +1,4 @@
 from datetime import timedelta
-from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -89,9 +88,3 @@ class TestReservation:
         reservation.delete()
         assert not reservation.is_active
         assert reservation.status == Status.CANCELED
-
-    @patch("core.tasks.send_reservation_email_task.delay")
-    def test_delete_reservation_call_email_sender(self, mock_email_send, reservation, user):
-        reservation.users.set([user])
-
-        assert mock_email_send.call_count == 1
