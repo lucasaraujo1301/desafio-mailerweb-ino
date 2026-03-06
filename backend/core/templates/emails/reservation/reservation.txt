@@ -1,0 +1,8 @@
+Reserva {{ event_type }}
+
+Título da reunião: {{ title }}
+Sala: {{ room }}
+Horário: {{ schedule }}
+Tipo de evento: {{ event_type }}
+
+Este é um e-mail automático de notificação de reservas.

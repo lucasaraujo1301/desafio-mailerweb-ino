@@ -1,9 +1,11 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from core.choices import Status
 from core.models import Reservation
 
 
@@ -79,3 +81,17 @@ class TestReservation:
             Reservation.objects.create(
                 title="Meeting 1:1", start_datetime=start_datetime, end_datetime=end_datetime, room=room
             )
+
+    def test_delete_reservation(self, reservation):
+        assert reservation.is_active
+        assert reservation.status == Status.ACTIVE
+
+        reservation.delete()
+        assert not reservation.is_active
+        assert reservation.status == Status.CANCELED
+
+    @patch("core.tasks.send_reservation_email_task.delay")
+    def test_delete_reservation_call_email_sender(self, mock_email_send, reservation, user):
+        reservation.users.set([user])
+
+        assert mock_email_send.call_count == 1
