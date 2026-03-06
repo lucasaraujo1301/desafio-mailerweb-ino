@@ -1,15 +1,23 @@
 import MockAdapter from "axios-mock-adapter";
-import api, { TOKEN_KEY, getStoredToken, storeToken, clearToken } from "@/services/api";
-import { authService } from "@/services/authService";
 
-const mock = new MockAdapter(api);
-
+// Mock js-cookie BEFORE any imports that use it
 const cookieStore: Record<string, string> = {};
 jest.mock("js-cookie", () => ({
   get:    (key: string) => cookieStore[key],
   set:    (key: string, value: string) => { cookieStore[key] = value; },
   remove: (key: string) => { delete cookieStore[key]; },
 }));
+
+// Mock window.location to suppress jsdom navigation errors
+Object.defineProperty(window, "location", {
+  value: { href: "" },
+  writable: true,
+});
+
+import api, { TOKEN_KEY } from "@/services/api";
+import { authService } from "@/services/authService";
+
+const mock = new MockAdapter(api);
 
 beforeEach(() => {
   mock.reset();
@@ -18,9 +26,9 @@ beforeEach(() => {
 
 describe("authService", () => {
   it("login stores token and returns token response", async () => {
-    mock.onPost("/api/user/token/").reply(200, { token: "abc123" });
+    mock.onPost("/api/user/token/").reply(200, { access: "abc123" });
     const res = await authService.login({ email: "a@b.com", password: "pass" });
-    expect(res.token).toBe("abc123");
+    expect(res.access).toBe("abc123");
     expect(cookieStore[TOKEN_KEY]).toBe("abc123");
   });
 

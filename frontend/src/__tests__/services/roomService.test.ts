@@ -18,7 +18,7 @@ beforeEach(() => mock.reset());
 
 describe("roomService", () => {
   it("getAll returns array of rooms", async () => {
-    mock.onGet("/api/rooms/").reply(200, [ROOM]);
+    mock.onGet("/api/rooms/").reply(200, { count: 1, next: null, previous: null, results: [ROOM] });
     const rooms = await roomService.getAll();
     expect(rooms).toHaveLength(1);
     expect(rooms[0].name).toBe("Sala Alpha");

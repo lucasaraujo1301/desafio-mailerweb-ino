@@ -15,13 +15,14 @@ const RES: Reservation = {
   is_active: true,
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-01T00:00:00Z",
+  status: "active"
 };
 
 beforeEach(() => mock.reset());
 
 describe("reservationService", () => {
   it("getAll returns list", async () => {
-    mock.onGet("/api/reservation/").reply(200, [RES]);
+    mock.onGet("/api/reservation/").reply(200, { count: 1, next: null, previous: null, results: [RES] });
     const list = await reservationService.getAll();
     expect(list).toHaveLength(1);
     expect(list[0].title).toBe("Daily");

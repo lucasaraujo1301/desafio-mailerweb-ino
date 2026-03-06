@@ -2,7 +2,7 @@ const nextJest = require("next/jest");
 const createJestConfig = nextJest({ dir: "./" });
 
 module.exports = createJestConfig({
-  setupFilesAfterFramework: ["<rootDir>/src/__tests__/setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/src/__tests__/setup.ts"],
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
   testMatch: ["<rootDir>/src/__tests__/**/*.test.{ts,tsx}"],

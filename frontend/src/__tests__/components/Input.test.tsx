@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/Input";
 describe("Input", () => {
   it("renders label", () => {
     render(<Input label="Email" />);
-    expect(screen.getByText("EMAIL")).toBeInTheDocument();
+    // CSS uppercase doesn't change DOM text content
+    expect(screen.getByText("Email")).toBeInTheDocument();
   });
 
   it("renders placeholder", () => {
@@ -33,7 +34,8 @@ describe("Input", () => {
 
   it("links label to input via id", () => {
     render(<Input label="Nome" id="nome-input" />);
-    const label = screen.getByText("NOME");
+    // CSS uppercase doesn't change DOM text content
+    const label = screen.getByText("Nome");
     expect(label).toHaveAttribute("for", "nome-input");
   });
 
