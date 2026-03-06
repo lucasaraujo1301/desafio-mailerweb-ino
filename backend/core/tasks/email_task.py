@@ -25,6 +25,7 @@ def send_reservation_email_task(
         email = EmailMultiAlternatives(
             subject=f"Reserva {event_type}",
             body=text_content,
+            from_email="noreply@example.com",
             to=to_emails,
         )
         email.attach_alternative(html_content, "text/html")
@@ -35,4 +36,5 @@ def send_reservation_email_task(
             "message": f"Email successfully sent to {to_emails} for reservation '{title}' ({event_type}).",
         }
     except Exception as e:
+        print(f"{e = }")
         self.retry(exc=e)

@@ -17,12 +17,12 @@ class ReservationSerializer(BaseModelSerializer):
         write_only=True,
         required=False,
     )
-    users_detail = UserSerializer(read_only=True, many=True)
+    users_detail = UserSerializer(source="users", read_only=True, many=True)
     room = serializers.PrimaryKeyRelatedField(
         queryset=Room.objects.filter(is_active=True),
         write_only=True,
     )
-    room_detail = RoomSerializer(read_only=True)
+    room_detail = RoomSerializer(source="room", read_only=True)
 
     class Meta(BaseModelSerializer.Meta):
         model = Reservation

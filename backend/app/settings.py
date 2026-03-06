@@ -46,12 +46,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_spectacular",
+    "corsheaders",
     "rest_framework_simplejwt",
     "core",
     "user",
+    "reservation",
+    "room"
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -77,6 +81,11 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://frontend:3000",
 ]
 
 WSGI_APPLICATION = "app.wsgi.application"
@@ -178,6 +187,6 @@ EMAIL_USE_TLS = False
 CELERY_BEAT_SCHEDULE = {
     "process-outbox-events": {
         "task": "core.tasks.periodic_task.process_outbox_events",
-        "schedule": 60.0,  # runs every 60 seconds
+        "schedule": 15.0,  # runs every 60 seconds
     },
 }
