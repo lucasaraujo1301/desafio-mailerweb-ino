@@ -16,23 +16,21 @@ services:
       - ./backend/.env
     depends_on:
       - db
-      - redis
-      - mailhog
+      - celery_worker
+      - celery_beat
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: dev
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: http://app:8000
     container_name: room-booking-frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app          # hot-reload via volume
-      - /app/node_modules        # preserve container's node_modules
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://app:8000
+      - NODE_ENV=production
     restart: unless-stopped
     depends_on:
       - app

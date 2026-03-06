@@ -187,6 +187,6 @@ EMAIL_USE_TLS = False
 CELERY_BEAT_SCHEDULE = {
     "process-outbox-events": {
         "task": "core.tasks.periodic_task.process_outbox_events",
-        "schedule": 15.0,  # runs every 60 seconds
+        "schedule": 60.0,  # runs every 60 seconds
     },
 }

@@ -40,16 +40,3 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
-
-# ── Stage 4: dev (watch mode) ─────────────────────────────────────────────────
-FROM deps AS dev
-WORKDIR /app
-
-COPY . .
-
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-
-EXPOSE 3000
-
-CMD ["npm", "run", "dev"]

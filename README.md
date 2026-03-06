@@ -1,252 +1,240 @@
+# 📅 Sistema de Reserva de Salas
 
-# 🧪 Coding Test — Fullstack
-## Meeting Room Booking + Async Notification System
+Sistema fullstack para gerenciamento de reservas de salas com notificações assíncronas por e-mail.
 
----
+## 🗂 Estrutura do Projeto
 
-# 📌 Sobre o Desafio
-
-Você deverá desenvolver uma aplicação **Fullstack** para gerenciamento de reservas de salas com um sistema de notificação assíncrono por e-mail.
-
-O objetivo é avaliar como você:
-
-- Estrutura a aplicação
-- Modela os dados
-- Implementa regras de negócio
-- Trata concorrência
-- Organiza processamento assíncrono
-- Escreve testes
-- Documenta decisões técnicas
-
-Você tem liberdade de arquitetura e implementação, desde que atenda aos requisitos descritos.
+```
+/
+├── backend/        # API Django + Celery
+├── frontend/       # Next.js
+└── docker-compose.yml
+```
 
 ---
 
-# ⏳ Prazo
+## ⚙️ Pré-requisitos
 
-Após receber o link do desafio, você tem **3 dias corridos** para submeter sua solução.
-
----
-
-# 🚀 Como proceder
-
-1. Faça o **fork** do repositório oficial:
-   https://github.com/MailerWeb/desafio-mailerweb-ino
-
-2. Desenvolva sua solução no seu fork.
-
-3. Ao finalizar, envie o link do seu repositório para avaliação.
+- [Docker](https://www.docker.com/) 24+
+- [Docker Compose](https://docs.docker.com/compose/) 2.20+
 
 ---
 
-# 🎯 Objetivo do Projeto
+## 🚀 Rodando o Projeto
 
-Construir uma aplicação que permita:
+### 1. Clone o repositório
 
-- Criar e gerenciar salas
-- Criar reservas com prevenção de conflito de horário
-- Editar e cancelar reservas
-- Notificar automaticamente os participantes por e-mail quando houver mudanças
+```bash
+git clone https://github.com/lucasaraujo1301/desafio-mailerweb-ino.git
+cd desafio-mailerweb-ino
+```
 
----
+### 2. Configure as variáveis de ambiente
 
-# 🧱 Stack
+```bash
+# Backend
+cp backend/.env.example backend/.env
 
-## Backend
-- Python 3.10+
-- Framework livre (FastAPI, Flask, Django etc.)
-- Banco livre (SQLite permitido, PostgreSQL recomendado)
+# Frontend
+cp frontend/.env.local.example frontend/.env.local
+```
 
-## Frontend
-- React ou Next.js
+Edite os arquivos com os valores adequados (veja a seção [Variáveis de Ambiente](#-variáveis-de-ambiente)).
 
-Estrutura de pastas livre (monorepo ou separadas).
+### 3. Suba todos os serviços
 
----
+```bash
+docker-compose up
+```
 
-# 📖 Contexto do Sistema
-
-A empresa precisa organizar reservas de salas e garantir que os participantes sejam notificados automaticamente quando uma reunião for:
-
-- Criada
-- Alterada
-- Cancelada
-
-As notificações devem ser processadas de forma **assíncrona**, via worker.
+> Adicione `-d` para rodar em background: `docker-compose up -d`
 
 ---
 
-# 🔧 Requisitos Funcionais
+## 🔧 Serviços disponíveis
 
-## 1️⃣ Salas
-
-- Criar sala
-- Listar salas
-- Visualizar detalhes
-- Nome único
-- Capacidade válida
-
----
-
-## 2️⃣ Reservas
-
-Uma reserva deve conter:
-
-- Título
-- Sala
-- Horário de início e fim
-- Status (ativa ou cancelada)
-- Participantes
-
-### Regras obrigatórias
-
-- Datas em ISO 8601 com timezone
-- `start_at < end_at`
-- Duração mínima: 15 minutos
-- Duração máxima: 8 horas
-- Não pode haver sobreposição de reservas ativas na mesma sala
-- Reservas canceladas não devem ser removidas
-
-### Overlap
-
-Existe conflito quando:
-
-    new_start < existing_end AND new_end > existing_start
-
-Reservas que apenas encostam no horário são permitidas.
-
-### Concorrência
-
-A aplicação deve impedir que duas requisições simultâneas criem reservas conflitantes.
-
-Documente sua estratégia (transação, lock, constraint etc.).
+| Serviço       | URL                   | Descrição                     |
+|---------------|-----------------------|-------------------------------|
+| Backend (API) | http://localhost:8000 | Django REST Framework         |
+| Frontend      | http://localhost:3000 | Next.js (hot-reload)          |
+| MailHog       | http://localhost:8025 | Visualizador de e-mails (dev) |
+| PostgreSQL    | localhost:5432        | Banco de dados                |
+| Redis         | localhost:6379        | Broker de mensagens           |
 
 ---
 
-# 🔐 Autenticação
+## 🖥 Backend
 
-Deve existir mecanismo de autenticação.
+O backend sobe automaticamente com o `docker-compose up`. Ele executa na ordem:
 
-Você pode usar:
+1. Aguarda o banco de dados estar pronto (`wait_for_db`)
+2. Roda as migrations (`migrate`)
+3. Inicia o servidor (`runserver`)
 
-- JWT
-- Token fixo
-- Sistema simplificado
+Para rodar **apenas** o backend:
 
-Deve existir conceito de usuário.
+```bash
+docker-compose up app db redis
+```
 
-Usuários autenticados podem:
+Para acessar o container:
 
-- Criar reservas
-- Editar reservas
-- Cancelar reservas
+```bash
+docker-compose exec app sh
+```
 
----
+Para criar um superusuário:
 
-# ✉️ Sistema de Mensageria (Obrigatório)
-
-Além das reservas, o sistema deve implementar um mecanismo assíncrono de notificação por e-mail usando padrão **Outbox + Worker**.
-
-## Eventos que devem gerar notificação
-
-- BOOKING_CREATED
-- BOOKING_UPDATED
-- BOOKING_CANCELED
-
-## Requisitos
-
-Ao criar/alterar/cancelar uma reserva:
-
-1. Persistir alteração da reserva
-2. Criar um evento na tabela de Outbox
-3. Garantir que ambos ocorram na mesma transação
+```bash
+docker-compose exec app python manage.py createsuperuser
+```
 
 ---
 
-## Worker
+## 🌐 Frontend
 
-Deve existir um worker separado que:
+O frontend roda em modo de desenvolvimento com hot-reload automático via volume mount.
 
-- Busca eventos pendentes
-- Processa envio de e-mails
-- Marca como processado
-- Implementa retry com controle de tentativas
-- Evita envio duplicado (idempotência)
+Para rodar **apenas** o frontend:
 
-O worker pode ser:
+```bash
+docker-compose up frontend
+```
 
-- Celery
-- RQ
-- Processo simples em loop
-- Command separado
+Para acessar o container:
 
-Documente como executar.
+```bash
+docker-compose exec frontend sh
+```
 
----
-## Conteúdo mínimo do e-mail
+Para rodar os testes:
 
-- Título da reunião
-- Sala
-- Horário
-- Tipo de evento (criada, alterada, cancelada)
-
-Pode ser texto simples.
+```bash
+docker-compose exec frontend npm test
+```
 
 ---
 
-# 🧪 Testes
+## ⚙️ Workers (Celery)
 
-## Backend
+O projeto possui dois workers Celery:
 
-Esperamos testes cobrindo:
+- **`celery_worker`** — processa tarefas assíncronas (ex: envio de e-mails)
+- **`celery_beat`** — agendador de tarefas periódicas
 
-- Validação de datas
-- Conflito de reserva
-- Permissões
-- Criação de evento no outbox
-- Processamento pelo worker
-- Idempotência de envio
+Eles sobem automaticamente com `docker-compose up`. Para rodar apenas os workers:
 
-## Frontend
+```bash
+docker-compose up celery_worker celery_beat redis
+```
 
-Testes mínimos para:
+Para verificar os logs do worker:
 
-- Criar reserva
-- Exibir erro de conflito
-- Fluxo básico de login
-- Integração com backend
+```bash
+docker-compose logs -f celery_worker
+```
 
 ---
 
-# 🖥️ Frontend
+## 🌍 Variáveis de Ambiente
 
-Deve permitir:
+### `backend/.env`
 
-- Login
-- Listar salas
-- Criar reserva
-- Editar/cancelar reserva
+| Variável     | Exemplo                | Descrição                    |
+|--------------|------------------------|------------------------------|
+| `DB_HOST`    | `db`                   | Host do banco de dados       |
+| `DB_NAME`    | `devdb`                | Nome do banco de dados       |
+| `DB_USER`    | `devuser`              | Usuário do banco de dados    |
+| `DB_PASS`    | `changeme`             | Senha do banco de dados      |
+| `BROKER_URL` | `redis://redis:6379/0` | URL do broker Redis (Celery) |
+| `EMAIL_HOST` | `mailhog`              | Host do servidor de e-mail   |
+| `EMAIL_PORT` | `1025`                 | Porta do servidor de e-mail  |
 
-UX deve tratar:
+```env
+DB_HOST=db
+DB_NAME=devdb
+DB_USER=devuser
+DB_PASS=changeme
+BROKER_URL=redis://redis:6379/0
+EMAIL_HOST=mailhog
+EMAIL_PORT=1025
+```
 
-- Loading
-- Erros
-- Feedback ao usuário
+### `frontend/.env.local`
+
+| Variável              | Exemplo           | Descrição               |
+|-----------------------|-------------------|-------------------------|
+| `NEXT_PUBLIC_API_URL` | `http://app:8000` | URL base da API backend |
+
+```env
+NEXT_PUBLIC_API_URL=http://app:8000
+```
+
+> As variáveis do PostgreSQL (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`) são usadas apenas internamente pelo serviço `db` no `docker-compose.yml` e não precisam ser definidas em nenhum `.env` das aplicações.
 
 ---
 
-# 📦 Entrega
+## 🛑 Parando os serviços
 
-Seu repositório deve conter:
+```bash
+# Para e mantém os volumes
+docker-compose down
 
-- Backend
-- Frontend
-- Testes
-- README com:
-  - Como rodar backend
-  - Como rodar frontend
-  - Como rodar worker
-  - Variáveis de ambiente
-  - Decisões técnicas
+# Para e remove os volumes (apaga o banco de dados)
+docker-compose down -v
+```
 
-Boa sorte 🚀
+---
+
+## 📋 Comandos úteis
+
+```bash
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs de um serviço específico
+docker-compose logs -f app
+
+# Rebuildar um serviço após mudanças
+docker-compose up --build frontend
+
+# Rodar migrations manualmente
+docker-compose exec app python manage.py migrate
+
+# Acessar o banco de dados
+docker-compose exec db psql -U devuser -d devdb
+```
+
+🧠 Decisões Técnicas
+
+Esta seção documenta as principais decisões de arquitetura e tecnologia do projeto, com o contexto e a motivação por trás de cada escolha.
+
+Backend
+
+- Uso do `uv` como gerenciamento de pacotes do python, por ser mais rápido que o `pip`
+- Uso do `ruff` como lint para manter um padrão no projeto
+- Django + DRF — escolhido pela facilidade e velocidade de desenvolvimento de APIs REST.
+- PostgreSQL — banco de dados principal, aproveitando recursos avançados como constraints e extensões nativas.
+- Celery + Redis — Celery como worker e Redis como broker para processamento assíncrono de mensagens.
+- Celery Beat — agendador de tarefas periódicas. A task process_outbox_events roda a cada 1 minuto para processar o envio assíncrono de e-mails.
+- Pytest — utilizado para os testes unitários do backend.
+- Constraints no nível do banco de dados — garantia de integridade além da camada de aplicação:
+  - Reservation — uso da extensão BtreeGistExtension do PostgreSQL para resolver o problema de overlap entre reservas, adicionando suporte a índices GiST para tipos como timestamp. 
+  - Room — constraint que impede a criação de salas com capacidade menor que 1.
+
+Frontend
+
+- Next.js 14 com App Router — layouts aninhados e separação clara entre rotas públicas (auth) e autenticadas (dashboard).
+- Axios com instância centralizada — token JWT injetado via request interceptor e redirecionamento automático para /login em 401 via response interceptor.
+- JWT em cookie via js-cookie — flag secure ativado apenas em produção para não bloquear o cookie em localhost HTTP.
+- React Hook Form + Zod — validação de formulários sem re-renders desnecessários, com o schema como única fonte de verdade para validação e tipos TypeScript.
+- Context + hooks locais — sem Redux ou Zustand. O AuthContext gerencia a sessão e useRooms/useReservations o estado local de cada página.
+- PaginatedResponse<T> genérico — tipo reutilizável para tratar a paginação do backend ({ count, next, previous, results }) de forma consistente em todos os serviços.
+- Jest + Testing Library — testes orientados ao comportamento do usuário. axios-mock-adapter mocka a camada HTTP sem precisar subir um servidor real.
+- Multi-stage Dockerfile — stages deps → builder → runner para imagem de produção enxuta, e stage dev com next dev e hot-reload via volume mount.
+
+---
+
+Infraestrutura
+
+- Docker + Docker Compose - Escolhido por ser uma configuração mais facilitada, sem a necessidade de ter todas as tecnologias instaladas localmente. 
