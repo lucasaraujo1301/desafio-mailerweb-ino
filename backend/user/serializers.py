@@ -1,14 +1,14 @@
-from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import Token
 
 from core.models import User
+from core.serializers import BaseModelSerializer
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
+class UserSerializer(BaseModelSerializer):
+    class Meta(BaseModelSerializer.Meta):
         model = User
-        fields = ["email", "password", "name"]
+        fields = BaseModelSerializer.Meta.fields + ["email", "password", "name"]
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
     def create(self, validated_data):

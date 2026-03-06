@@ -103,7 +103,16 @@ class TestsPrivateUserApi:
         res = auth_client.get(ME_URL)
 
         assert res.status_code == status.HTTP_200_OK
-        assert res.data == {"name": user.name, "email": user.email}
+
+        expected = {
+            "name": user.name,
+            "email": user.email,
+            "is_active": user.is_active,
+            "id": user.id,
+            "created_at": user.created_at.isoformat().replace("+00:00", "Z"),
+            "updated_at": user.updated_at.isoformat().replace("+00:00", "Z"),
+        }
+        assert res.data == expected
 
     def test_post_me_not_allowed(self, auth_client):
         res = auth_client.post(ME_URL, {})
