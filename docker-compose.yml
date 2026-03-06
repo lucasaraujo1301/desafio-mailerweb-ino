@@ -12,11 +12,48 @@ services:
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
-    env_file:
-      - ./backend/.env
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+      - BROKER_URL=redis://redis:6379/0
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
     depends_on:
       - db
       - redis
+      - mailhog
+
+  celery_worker:
+    build: ./backend
+    command: celery -A app worker -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      - BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+      - mailhog
+
+  celery_beat:
+    build: ./backend
+    command: celery -A app beat -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      - BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+      - mailhog
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
 
   db:
     image: postgres:15.5-alpine

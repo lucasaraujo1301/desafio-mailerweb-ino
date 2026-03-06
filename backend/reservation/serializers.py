@@ -59,36 +59,29 @@ class ReservationSerializer(BaseModelSerializer):
     def create(self, validated_data):
         with transaction.atomic():
             reservation = super().create(validated_data)
-            OutboxEvent.objects.create(
-                event_type="BOOKING_CREATED",
-                payload={
-                    "reservation_id": reservation.id,
-                    "title": reservation.title,
-                    "to_emails": list(reservation.users.values_list("email", flat=True)),
-                    "room_name": reservation.room.name,
-                    "start_datetime": reservation.start_datetime,
-                    "end_datetime": reservation.end_datetime,
-                    "event_type": OutboxEventType.BOOKING_CREATED.label,
-                },
-            )
+            self._create_outerbox_event(reservation, OutboxEventType.BOOKING_CREATED)
         return reservation
 
     def update(self, instance, validated_data):
         with transaction.atomic():
             reservation = super().update(instance, validated_data)
-            OutboxEvent.objects.create(
-                event_type=OutboxEventType.BOOKING_UPDATED,
-                payload={
-                    "reservation_id": reservation.id,
-                    "title": reservation.title,
-                    "to_emails": list(reservation.users.values_list("email", flat=True)),
-                    "room_name": reservation.room.name,
-                    "start_datetime": reservation.start_datetime,
-                    "end_datetime": reservation.end_datetime,
-                    "event_type": OutboxEventType.BOOKING_UPDATED.label,
-                },
-            )
+            self._create_outerbox_event(reservation, OutboxEventType.BOOKING_UPDATED)
+
         return reservation
+
+    def _create_outerbox_event(self, reservation: Reservation, event_type: OutboxEventType) -> None:
+        OutboxEvent.objects.create(
+            event_type=event_type,
+            payload={
+                "reservation_id": reservation.pk,
+                "title": reservation.title,
+                "to_emails": list(reservation.users.values_list("email", flat=True)),
+                "room_name": reservation.room.name,
+                "start_datetime": reservation.start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                "end_datetime": reservation.end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                "event_type": event_type.label,
+            },
+        )
 
     def _get_request_user(self) -> User | None:
         context = self.context.get("request")

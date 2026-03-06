@@ -36,8 +36,8 @@ class TestProcessOutboxEvents:
             to_emails=["test@example.com"],
             title="Test Reservation",
             room_name="Room 101",
-            start_datetime="2026-03-05T14:00:00",
-            end_datetime="2026-03-05T15:00:00",
+            start_datetime=datetime(2026, 3, 5, 14, 0),
+            end_datetime=datetime(2026, 3, 5, 15, 0),
             event_type="BOOKING_CREATED",
         )
 
