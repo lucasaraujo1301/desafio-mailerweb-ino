@@ -34,6 +34,7 @@ class ReservationSerializer(BaseModelSerializer):
             "users",
             "users_detail",
             "room_detail",
+            "status",
         ]
 
     def validate(self, attrs: dict) -> dict:
